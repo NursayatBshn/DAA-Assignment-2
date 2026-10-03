@@ -133,12 +133,12 @@ public class MyLinkedList implements MyCollection {
     public boolean contains(int x) {
         Node curr = head;
         while (curr != null) {
-            metrics.addComparison(); // compare elements
+            metrics.addComparison(); // compare
             if (curr.val == x) {
                 return true;
             }
             curr = curr.next;
-            metrics.addStep(); // one move to the next node
+            metrics.addStep(); // move to next node
         }
         return false;
     }

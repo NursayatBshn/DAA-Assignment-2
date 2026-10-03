@@ -96,15 +96,15 @@ while (2 * index + 1 < size) {
 
 ## 3. Empirical Workload Benchmark Results
 
-All benchmarks were conducted using Java 21 OpenJDK, discarding 5 initial warm-up runs to ensure complete JIT compilation, and recording the median execution time across 5 subsequent runs. Input data was generated deterministically using `new Random(42)`.
+All benchmarks were conducted using OpenJDK 21, discarding 5 initial warm-up runs to ensure full JIT compilation, and accumulating query results into a `volatile` sink to prevent Dead Code Elimination (DCE). The median execution time across 5 subsequent runs is recorded.
 
 ### Workload 1: Random Access (10,000 queries)
 | $n$ | `DynamicArray` Time (ms) | `DynamicArray` Steps | `MyLinkedList` Time (ms) | `MyLinkedList` Steps | Ratio ($T_{\text{list}} / T_{\text{arr}}$) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| **100** | 0.074 | 10,000 | 0.257 | 245,745 | 3.5× |
-| **1,000** | 0.044 | 10,000 | 2.693 | 2,487,236 | 61.2× |
-| **10,000** | 0.009 | 10,000 | 29.190 | 25,115,556 | 3,243× |
-| **100,000** | 0.008 | 10,000 | 316.822 | 248,886,755 | **39,602×** |
+| **100** | 0.106 | 10,000 | 0.394 | 245,745 | 3.7× |
+| **1,000** | 0.041 | 10,000 | 2.629 | 2,487,236 | 64.1× |
+| **10,000** | 0.087 | 10,000 | 29.496 | 25,115,556 | 339× |
+| **100,000** | 0.010 | 10,000 | 315.893 | 248,886,755 | **~31,500×** |
 
 ![W1 Time vs n](results/plots/W1_time.png)  
 ![W1 Operations vs n](results/plots/W1_operations.png)
@@ -114,10 +114,10 @@ All benchmarks were conducted using Java 21 OpenJDK, discarding 5 initial warm-u
 ### Workload 2: Search (1,000 queries, 50% present, 50% absent)
 | $n$ | `DynamicArray` Time (ms) | `DynamicArray` Steps | `MyLinkedList` Time (ms) | `MyLinkedList` Steps | Comparisons (Both) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| **100** | 0.080 | 75,861 | 0.162 | 75,361 | 75,861 |
-| **1,000** | 0.338 | 734,862 | 1.275 | 734,362 | 734,862 |
-| **10,000** | 3.191 | 7,523,058 | 12.697 | 7,522,558 | 7,523,058 |
-| **100,000** | 32.098 | 75,177,945 | 128.168 | 75,177,445 | 75,177,945 |
+| **100** | 0.087 | 75,861 | 0.169 | 75,361 | 75,861 |
+| **1,000** | 0.346 | 734,862 | 1.276 | 734,362 | 734,862 |
+| **10,000** | 3.140 | 7,523,058 | 12.597 | 7,522,558 | 7,523,058 |
+| **100,000** | 31.985 | 75,177,945 | 127.011 | 75,177,445 | 75,177,945 |
 
 ![W2 Time vs n](results/plots/W2_time.png)  
 ![W2 Operations vs n](results/plots/W2_operations.png)
@@ -127,14 +127,14 @@ All benchmarks were conducted using Java 21 OpenJDK, discarding 5 initial warm-u
 ### Workload 3: Insert & Remove (1,000 insertions followed by 1,000 removals)
 | Variant | $n$ | `DynamicArray` Time (ms) | `DynamicArray` Moves | `MyLinkedList` Time (ms) | `MyLinkedList` Moves |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Head ($i=0$)** | 100 | 0.420 | 1,201,120 | 0.078 | 5,000 |
-| **Head ($i=0$)** | 1,000 | 0.921 | 3,001,280 | 0.052 | 5,000 |
-| **Head ($i=0$)** | 10,000 | 6.012 | 21,010,240 | 0.018 | 5,000 |
-| **Head ($i=0$)** | 100,000 | **50.782** | 201,000,000 | **0.012** | 5,000 |
-| **Middle ($i=n/2$)** | 100 | 0.398 | 1,101,120 | 0.151 | 6,000 |
-| **Middle ($i=n/2$)** | 1,000 | 0.593 | 2,001,280 | 1.167 | 6,000 |
-| **Middle ($i=n/2$)** | 10,000 | 2.693 | 11,010,240 | 11.745 | 6,000 |
-| **Middle ($i=n/2$)** | 100,000 | **25.425** | 101,000,000 | **126.914** | 6,000 |
+| **Head ($i=0$)** | 100 | 0.428 | 1,201,120 | 0.072 | 5,000 |
+| **Head ($i=0$)** | 1,000 | 0.909 | 3,001,280 | 0.050 | 5,000 |
+| **Head ($i=0$)** | 10,000 | 6.108 | 21,010,240 | 0.017 | 5,000 |
+| **Head ($i=0$)** | 100,000 | **50.654** | 201,000,000 | **0.013** | 5,000 |
+| **Middle ($i=n/2$)** | 100 | 0.389 | 1,101,120 | 0.151 | 6,000 |
+| **Middle ($i=n/2$)** | 1,000 | 0.595 | 2,001,280 | 1.150 | 6,000 |
+| **Middle ($i=n/2$)** | 10,000 | 2.604 | 11,010,240 | 11.832 | 6,000 |
+| **Middle ($i=n/2$)** | 100,000 | **25.582** | 101,000,000 | **120.395** | 6,000 |
 
 ![W3 Time vs n](results/plots/W3_time.png)  
 ![W3 Operations vs n](results/plots/W3_operations.png)
@@ -144,10 +144,10 @@ All benchmarks were conducted using Java 21 OpenJDK, discarding 5 initial warm-u
 ### Workload 4: Priority Processing (`MinHeap`, $n$ inserts + $n$ extracts)
 | $n$ | Time (ms) | Steps | Moves | Comparisons | Sorted Verification |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| **100** | 0.055 | 2,487 | 1,413 | 1,069 | PASSED |
-| **1,000** | 0.195 | 37,913 | 20,629 | 17,322 | PASSED |
-| **10,000** | 0.952 | 508,797 | 269,209 | 239,284 | PASSED |
-| **100,000** | 9.567 | 6,482,395 | 3,421,383 | 3,059,283 | PASSED |
+| **100** | 0.089 | 2,487 | 1,413 | 1,069 | PASSED |
+| **1,000** | 0.204 | 37,913 | 20,629 | 17,322 | PASSED |
+| **10,000** | 0.965 | 508,797 | 269,209 | 239,284 | PASSED |
+| **100,000** | 9.609 | 6,482,395 | 3,421,383 | 3,059,283 | PASSED |
 
 ![W4 Time vs n](results/plots/W4_time.png)  
 ![W4 Operations vs n](results/plots/W4_operations.png)
@@ -156,18 +156,18 @@ All benchmarks were conducted using Java 21 OpenJDK, discarding 5 initial warm-u
 
 ## 4. Discussion & Hardware-Level Analysis
 
-1. **Random Access Performance (W1)**: In Workload 1 at $n = 100,000$, `DynamicArray` completed 10,000 random lookups in **0.008 ms**, whereas `MyLinkedList` required **316.822 ms**, representing an astronomical difference of nearly **40,000×**.
-2. **Algorithmic Explanation**: `DynamicArray` performs random indexing in strictly $O(1)$ time and 1 step per lookup via direct base-pointer arithmetic (`data[index]`), totaling exactly 10,000 steps. In contrast, `MyLinkedList` must traverse up to $n/2$ node references per query, totaling $248,886,755$ steps across the 10,000 queries.
+1. **Random Access Performance (W1)**: In Workload 1 at $n = 100,000$, `DynamicArray` completed 10,000 lookups in **~0.010 ms**, whereas `MyLinkedList` required **315.893 ms**, demonstrating a performance gap of several thousand times.
+2. **Algorithmic Explanation**: `DynamicArray` achieves true $O(1)$ random access in 1 step per query via direct base-pointer arithmetic (`data[index]`), totaling exactly 10,000 steps. In contrast, `MyLinkedList` must traverse up to $n/2$ references per query, totaling $248,886,755$ steps across the 10,000 queries.
 3. **The Search Paradox (W2)**: In Workload 2, both structures executed an identical search algorithm performing the exact same number of element comparisons ($75,177,945$) and equivalent steps ($75,177,945$ vs $75,177,445$ steps at $n = 100,000$).
-4. **Cache Locality vs. Pointer Chasing**: Despite identical physical operation counts, `DynamicArray` (32.098 ms) was **4× faster** than `MyLinkedList` (128.168 ms). 
-5. **Hardware Mechanism**: Modern CPUs fetch memory in 64-byte cache lines. In `DynamicArray`, primitive `int` values are packed contiguously; loading a single 4-byte integer automatically brings the subsequent 15 integers into the L1 CPU data cache (high spatial locality). In `MyLinkedList`, each `Node` object is allocated individually across the JVM heap, forcing the CPU to stall on cache misses while chasing pointers through main memory.
-6. **Head Insertion & Removal (W3)**: In the `head` variant at $n = 100,000$, `MyLinkedList` was over **4,200× faster** than `DynamicArray` (0.012 ms vs. 50.782 ms).
-7. **Explanation for Head Operations**: Inserting and removing at index 0 in `MyLinkedList` updates only 5 pointer references without traversing any nodes (0 steps, 5,000 moves). Conversely, `DynamicArray` must shift all $n$ elements to the right upon each insertion and back to the left upon removal, performing $201,000,000$ memory moves.
-8. **Middle Insertion & Removal (W3)**: Crucially, in the `middle` variant at $n = 100,000$, the performance reverses dramatically: `DynamicArray` (25.425 ms) is **5× faster** than `MyLinkedList` (126.914 ms).
-9. **Traversal Overhead vs. Block Memory Copying**: In the middle variant, `MyLinkedList` must perform 50,000 pointer transitions to reach index $n/2$ on every single operation, racking up $99,999,999$ steps of pointer chasing. Although `DynamicArray` shifts $n/2$ elements (101,000,000 moves), copying contiguous cache lines in L1/L2 cache via CPU vectorization is orders of magnitude faster than resolving disjoint pointer links across RAM.
-10. **Garbage Collection Pressure**: Each insertion in `MyLinkedList` instantiates a new heap object, creating substantial memory allocation overhead and triggering JVM Garbage Collection pauses. `DynamicArray` creates no intermediate objects and reuses its backing array.
-11. **Selection Guidelines**: `DynamicArray` is the strictly superior choice for general-purpose workloads requiring random access, linear iterations, and compact memory footprint.
-12. **When to use MyLinkedList**: `MyLinkedList` is suitable only when frequent insertions and removals occur exclusively at the collection boundaries ($O(1)$ head/tail operations), such as implementing FIFO queues or double-ended queues (Deques).
+4. **Cache Locality vs. Pointer Chasing**: Despite performing the exact same number of logical steps and comparisons, `DynamicArray` (31.985 ms) was **~4× faster** than `MyLinkedList` (127.011 ms).
+5. **Hardware Mechanism**: Modern CPUs fetch memory in 64-byte cache lines. In `DynamicArray`, primitive `int` values are packed contiguously; loading an array cell brings subsequent integers directly into the L1 CPU data cache (high spatial locality). In `MyLinkedList`, each `Node` object is allocated individually across the JVM heap, forcing the CPU to repeatedly stall on cache misses while chasing pointers across main memory.
+6. **Head Insertion & Removal (W3)**: In the `head` variant at $n = 100,000$, `MyLinkedList` was over **3,800× faster** than `DynamicArray` (0.013 ms vs. 50.654 ms).
+7. **Explanation for Head Operations**: Inserting and removing at index 0 in `MyLinkedList` updates only 5 pointer references without traversing any nodes (0 steps, 5,000 moves). Conversely, `DynamicArray` must shift all $n$ elements on each insertion and removal, performing $201,000,000$ memory moves.
+8. **Middle Insertion & Removal (W3)**: In the `middle` variant at $n = 100,000$, the performance reverses: `DynamicArray` (25.582 ms) is **~4.7× faster** than `MyLinkedList` (120.395 ms).
+9. **Traversal Overhead vs. Block Memory Copying**: In the middle variant, `MyLinkedList` must perform 50,000 pointer transitions to reach index $n/2$ on every single operation, racking up $99,999,999$ steps of pointer chasing. Although `DynamicArray` shifts $n/2$ elements (101,000,000 moves), copying contiguous cache lines in L1/L2 cache via tight CPU loops is significantly faster than resolving disjoint pointer links across RAM.
+10. **Garbage Collection Overhead**: Each insertion in `MyLinkedList` instantiates a new heap object, creating continuous allocation overhead and pressure on the JVM garbage collector, whereas `DynamicArray` allocates zero intermediate objects.
+11. **Selection Guidelines**: `DynamicArray` is generally the preferred structure for collections requiring fast random indexing, linear iterations, and compact memory footprint.
+12. **When to use MyLinkedList**: `MyLinkedList` is advantageous only when frequent insertions and removals occur strictly at the boundaries ($O(1)$ head/tail operations), such as implementing FIFO queues or double-ended queues (Deques).
 13. **When to use MinHeap**: `MinHeap` is the optimal data structure for priority-driven processing (event simulation, task scheduling, Dijkstra's shortest path), where finding the minimum is $O(1)$ and priority updates are guaranteed $O(\log n)$.
 
 ---
@@ -175,7 +175,7 @@ All benchmarks were conducted using Java 21 OpenJDK, discarding 5 initial warm-u
 ## 5. Bonus Tasks
 
 ### Task A: Memory Footprint Analysis (JOL)
-Using the OpenJDK Java Object Layout (JOL) tool, we quantified the exact deep heap consumption of all three structures storing $n$ primitive integers:
+Using OpenJDK Java Object Layout (JOL), we measured the deep heap consumption of all three structures storing $n$ primitive integers:
 
 | Elements ($n$) | `DynamicArray` (Bytes / MB) | `MinHeap` (Bytes / MB) | `MyLinkedList` (Bytes / MB) | Overhead Ratio ($\text{List} / \text{Array}$) |
 | :---: | :---: | :---: | :---: | :---: |
@@ -186,20 +186,23 @@ Using the OpenJDK Java Object Layout (JOL) tool, we quantified the exact deep he
 
 ![Memory vs n](results/plots/memory_vs_n.png)
 
-#### Explanation of Object Overhead
-* **DynamicArray & MinHeap**: Backed by a contiguous primitive array `int[]`. Each element consumes exactly 4 bytes. The only overhead is the array object header (16 bytes: 8-byte mark word, 4-byte klass word, 4-byte array length).
-* **MyLinkedList Node Overhead**: In 64-bit JVMs with Compressed OOPs enabled:
-  - Object header: 12 bytes (8-byte mark word + 4-byte compressed class pointer)
-  - Data payload: 4 bytes (`int val`)
-  - Two node references: 8 bytes (4-byte compressed pointer to `next` + 4-byte to `prev`)
-  - Padding / alignment: 0 bytes (sum is 24 bytes, already divisible by 8)
-  - **Total per node: exactly 24 bytes per element!**
-* **Conclusion**: `MyLinkedList` requires $24 / 4 = 6\times$ more memory per active element than a packed array, demonstrating the heavy cost of pointer structures in memory-constrained environments.
+#### Object Layout Breakdown & Discrepancy Explanation
+1. **Node Object Layout**: Under 64-bit JVM with Compressed OOPs:
+   - Object Header: 12 bytes (8-byte mark word + 4-byte compressed class pointer)
+   - Payload: 4 bytes (`int val`)
+   - References: 8 bytes (4-byte `next` + 4-byte `prev`)
+   - Memory Alignment: 0 bytes (sum is 24 bytes, divisible by 8)
+   - **Total per Node: exactly 24 bytes.**
+2. **Why the Observed Ratio is 3.4×–5.9× (and not exactly 6×)**:
+   - A packed primitive integer in an array takes 4 bytes. Therefore, the theoretical ratio of active element payload is $24 / 4 = 6.0\times$.
+   - However, `DynamicArray` and `MinHeap` grow dynamically via geometric doubling ($2\times$). At $n = 100,000$, the backing `int[]` has resized to a capacity of $163,840$ integers ($655,360$ bytes), meaning there are $63,840$ currently unused allocated slots (excess capacity).
+   - Furthermore, all structures maintain an internal container object header and a reference to the `Metrics` instance. 
+   - Dividing total allocated memory at $n=100,000$ yields $655,440 / 100,000 \approx 6.55$ bytes per element for `DynamicArray`, resulting in the observed $2,400,072 / 655,440 \approx 3.66\times$ ratio.
 
 ---
 
 ### Task B: Floyd's Bottom-Up `buildHeap` vs. $n$ Sequential Inserts
-We benchmarked Floyd's bottom-up $O(n)$ `buildHeap` algorithm against $n$ sequential `insert(x)` calls on identical inputs:
+We evaluated Floyd's bottom-up $O(n)$ `buildHeap` against $n$ sequential `insert(x)` calls:
 
 | $n$ | `buildHeap` Time (ms) | `buildHeap` Comparisons | `n_inserts` Time (ms) | `n_inserts` Comparisons | Speedup ($\times$) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -210,9 +213,12 @@ We benchmarked Floyd's bottom-up $O(n)$ `buildHeap` algorithm against $n$ sequen
 
 ![BuildHeap vs Inserts](results/plots/buildheap_vs_insert.png)
 
-#### Mathematical Explanation
-* In sequential insertions, each newly added element enters as a leaf at depth $\approx \log_2 n$ and sifts **upward** towards the root. Because at least $n/2$ of all elements reside at the bottom leaves, their potential path length is $O(\log n)$, leading to a total worst-case complexity of $\sum_{i=1}^n \log i = \Theta(n \log n)$.
-* In Floyd's algorithm, the array is populated first, and `bubbleDown` is executed backwards from $\lfloor n/2 \rfloor - 1$ to 0. Here, the nodes with the greatest height ($h = \log n$) are very few (the root is only 1 node), while the majority of nodes have very small heights (e.g. $n/4$ nodes have height 1, $n/8$ have height 2).
-* The total work is bounded by:
-  $$\sum_{h=0}^{\lfloor \log_2 n \rfloor} \frac{n}{2^{h+1}} O(h) = \frac{n}{2} \sum_{h=0}^\infty \frac{h}{2^h} = O(n)$$
-* At $n = 100,000$, Floyd's algorithm executes in **1.290 ms** with only **187,911 comparisons** ($\approx 1.88n$), achieving a **2.6× speedup** over sequential insertions.
+#### Algorithmic & Complexity Analysis
+* **Why the speedup is ~2.6× (rather than $\log_2 n \approx 16.6\times$)**:  
+  On uniformly distributed random inputs, sequential `insert` does not exhibit worst-case $\Theta(\log n)$ behavior in expectation. A random element sifts up only $\approx 1.6 - 2.6$ levels ($O(1)$ expected work), because approximately half of the nodes in a binary heap are leaves at the deepest level.  
+  Despite this, Floyd's algorithm achieves a **2.6× speedup** at $n = 100,000$ because:
+  1. It performs fewer comparisons ($1.88n$ vs $2.28n$).
+  2. Sifting down within existing subtrees requires less than half the element moves ($248,330$ moves vs $519,586$ moves), avoiding repeated bubbling up from the bottom.
+  3. Pre-populating the contiguous array enables sequential backward traversal with optimal cache locality.
+* **Why `buildHeap` is ~0.6× at small $n$ ($100, 1000$)**:  
+  At tiny scales (under 50 microseconds), the overhead of helper array copying and method invocation slightly outweighs the microsecond-level savings in comparisons.

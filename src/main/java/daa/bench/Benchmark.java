@@ -38,6 +38,8 @@ public class Benchmark {
         return results;
     }
 
+    public static volatile long blackhole = 0;
+
     private static void runW1(int n, List<Result> results) {
         Random rand = new Random(42);
         int[] data = new int[n];
@@ -52,9 +54,11 @@ public class Benchmark {
             DynamicArray arr = new DynamicArray(m);
             for (int x : data) arr.add(x);
             return new BenchmarkTask(m, () -> {
+                long sink = 0;
                 for (int q : queries) {
-                    arr.get(q);
+                    sink += arr.get(q);
                 }
+                blackhole += sink;
             });
         }, results);
 
@@ -64,9 +68,11 @@ public class Benchmark {
             MyLinkedList list = new MyLinkedList(m);
             for (int x : data) list.add(x);
             return new BenchmarkTask(m, () -> {
+                long sink = 0;
                 for (int q : queries) {
-                    list.get(q);
+                    sink += list.get(q);
                 }
+                blackhole += sink;
             });
         }, results);
     }
@@ -94,9 +100,11 @@ public class Benchmark {
             DynamicArray arr = new DynamicArray(m);
             for (int x : data) arr.add(x);
             return new BenchmarkTask(m, () -> {
+                long sink = 0;
                 for (int q : queries) {
-                    arr.contains(q);
+                    if (arr.contains(q)) sink++;
                 }
+                blackhole += sink;
             });
         }, results);
 
@@ -106,9 +114,11 @@ public class Benchmark {
             MyLinkedList list = new MyLinkedList(m);
             for (int x : data) list.add(x);
             return new BenchmarkTask(m, () -> {
+                long sink = 0;
                 for (int q : queries) {
-                    list.contains(q);
+                    if (list.contains(q)) sink++;
                 }
+                blackhole += sink;
             });
         }, results);
     }
