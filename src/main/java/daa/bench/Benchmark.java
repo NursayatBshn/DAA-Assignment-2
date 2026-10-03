@@ -1,11 +1,5 @@
 package daa.bench;
 
-import daa.metrics.Metrics;
-import daa.structures.DynamicArray;
-import daa.structures.MinHeap;
-import daa.structures.MyCollection;
-import daa.structures.MyLinkedList;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,6 +9,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.function.Supplier;
+
+import daa.metrics.Metrics;
+import daa.structures.DynamicArray;
+import daa.structures.MinHeap;
+import daa.structures.MyLinkedList;
 
 public class Benchmark {
     private static final int[] SIZES = {100, 1000, 10000, 100000};
@@ -53,13 +52,16 @@ public class Benchmark {
             Metrics m = new Metrics();
             DynamicArray arr = new DynamicArray(m);
             for (int x : data) arr.add(x);
+            int reps = 20;
             return new BenchmarkTask(m, () -> {
                 long sink = 0;
-                for (int q : queries) {
-                    sink += arr.get(q);
+                for (int rep = 0; rep < reps; rep++) {
+                    for (int q : queries) {
+                        sink += arr.get(q);
+                    }
                 }
                 blackhole += sink;
-            });
+            }, reps);
         }, results);
 
         // MyLinkedList
@@ -99,13 +101,16 @@ public class Benchmark {
             Metrics m = new Metrics();
             DynamicArray arr = new DynamicArray(m);
             for (int x : data) arr.add(x);
+            int reps = (n <= 1000 ? 10 : 1);
             return new BenchmarkTask(m, () -> {
                 long sink = 0;
-                for (int q : queries) {
-                    if (arr.contains(q)) sink++;
+                for (int rep = 0; rep < reps; rep++) {
+                    for (int q : queries) {
+                        if (arr.contains(q)) sink++;
+                    }
                 }
                 blackhole += sink;
-            });
+            }, reps);
         }, results);
 
         // MyLinkedList
@@ -237,10 +242,16 @@ public class Benchmark {
     private static class BenchmarkTask {
         final Metrics metrics;
         final Runnable runnable;
+        final int repeats;
 
         BenchmarkTask(Metrics metrics, Runnable runnable) {
+            this(metrics, runnable, 1);
+        }
+
+        BenchmarkTask(Metrics metrics, Runnable runnable, int repeats) {
             this.metrics = metrics;
             this.runnable = runnable;
+            this.repeats = repeats;
         }
     }
 
@@ -259,20 +270,26 @@ public class Benchmark {
             task.runnable.run();
         }
 
-        // 2. Measurement runs
+        // 2. Prepare for measurement
+        System.gc();
+        try {
+            Thread.sleep(15);
+        } catch (InterruptedException ignored) {}
+
         double[] times = new double[MEASURE_RUNS];
         Metrics lastMetrics = null;
+        int taskRepeats = 1;
 
         for (int i = 0; i < MEASURE_RUNS; i++) {
-            System.gc();
             BenchmarkTask task = taskSupplier.get();
+            taskRepeats = task.repeats;
             task.metrics.reset();
 
             long start = System.nanoTime();
             task.runnable.run();
             long end = System.nanoTime();
 
-            times[i] = (end - start) / 1_000_000.0;
+            times[i] = ((end - start) / (double) task.repeats) / 1_000_000.0;
             lastMetrics = task.metrics;
         }
 
@@ -285,8 +302,8 @@ public class Benchmark {
                 structure,
                 n,
                 medianTime,
-                lastMetrics.getSteps(),
-                lastMetrics.getMoves(),
-                lastMetrics.getComparisons()));
+                lastMetrics.getSteps() / taskRepeats,
+                lastMetrics.getMoves() / taskRepeats,
+                lastMetrics.getComparisons() / taskRepeats));
     }
 }
