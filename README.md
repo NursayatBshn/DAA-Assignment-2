@@ -1,7 +1,7 @@
 # Design and Analysis of Algorithms — Assignment 2: Data Structures
 
 **Student**: Nursayat Bashan  
-**Group**: SE  
+**Group**: SE-2521  
 **GitHub Repository**: [https://github.com/NursayatBshn/DAA-Assignment-2.git](https://github.com/NursayatBshn/DAA-Assignment-2.git) (branch `main`, tag `v1.0`)
 
 ---
